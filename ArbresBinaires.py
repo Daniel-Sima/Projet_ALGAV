@@ -5,7 +5,6 @@ class ArbreBinaire:
     self.enfant_gauche = None
     self.enfant_droit = None
     self.id = id
-    self.visite = False
 
   def insert_gauche(self, valeur):
     if self.enfant_gauche == None:
