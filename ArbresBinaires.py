@@ -1,10 +1,11 @@
 class ArbreBinaire:
 
+  # Constructeur de la structure de donnee ArbreBinaire
   def __init__(self, valeur, id):
-    self.valeur = valeur
-    self.enfant_gauche = None
-    self.enfant_droit = None
-    self.id = id
+    self.valeur = valeur            # Etiquette du noeud
+    self.enfant_gauche = None       # Enfant gauche du noeud
+    self.enfant_droit = None        # Enfant droit du noeud
+    self.id = id                    # Identifiant du noeud pour permettre un affichga sans doublons
 
   def insert_gauche(self, valeur):
     if self.enfant_gauche == None:

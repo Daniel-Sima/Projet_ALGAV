@@ -1,30 +1,30 @@
-import numpy as np
-import ArbresBinaires
-import math
-import os
-import copy
-import matplotlib.pyplot as plt
-import time
-from random import *
-from tabulate import tabulate
-from datetime import timedelta
-
-identf = 0
-
-
+import numpy as np                # Bibliotheque manipulant des entiers de taille arbitraire
+import ArbresBinaires             # Classe manipulant la structure de donnee utilisee ici
+import math                       # Bibliotheque manipulant les fonctions mathematiques
+import os                         # Bibliotheque manipulant les commandes sur le systeme
+import matplotlib.pyplot as plt   # Bibliotheque permettant de tracer les graphes de l'experience 
+import time                       # Bibliotheque manipulant le temps pour chronométrer les experiences
+from tabulate import tabulate     # Bibliotheque manipulant l'affichage sous forme de tableau dans le terminal
+from datetime import timedelta    # Bibliotheque manipulant le formattage du temps en hh::mm::ss
 # ----------------------------------------------------------------------------------- #
+identf = 0    # Variable globale pour identifier les noeuds pour l'affichage sous format dot
+# ----------------------------------------------------------------------------------- #
+# ---------------------------- PARTIE I --------------------------------------------- #
+# ----------------------------------------------------------------------------------- #
+# Fonction renvoyant une liste de bits representant la decomposition en base 2 de l’entier x, 
+# telle que les bits de poids les plus faibles soient presentes en tete de liste
 def decomposition(x):
   LR = []
   if (x == 0): return LR
-  binX = bin(x)[2:]
+  binX = bin(x)[2:]       # A partir du 2eme car les 2 premiers caracteres sont '0b' 
   for i in binX:
     if (i == '1'): LR.insert(0, True)
     elif (i == '0'): LR.insert(0, False)
 
   return LR
-
-
 # ----------------------------------------------------------------------------------- #
+# Fonction renvoyant soit la liste tronquee ne contenant que ses n premiers elements,
+# soit la liste completee a droite par des valeurs False, de taille n. 
 def completion(Liste, n):
   if (n <= len(Liste)): return Liste[:n]
   else:
@@ -32,36 +32,36 @@ def completion(Liste, n):
     for i in range(difference):
       Liste.append(False)
   return Liste
-
-
 # ----------------------------------------------------------------------------------- #
+# Fonction qui decompose x en base 2 et qui complete la liste obtenue afin qu’elle soit de taille n.
 def table(x, n):
   return completion(decomposition(x), n)
-
-
 # ----------------------------------------------------------------------------------- #
-#Question 2.9
+# ---------------------------- PARTIE II -------------------------------------------- #
+# ----------------------------------------------------------------------------------- #
+#  Fonction qui construit l’arbre de decision associe a la table de verite 'table'.
 def cons_arbre(table):
-  global identf
-  h = int(math.log(len(table), 2))
-  root = ArbresBinaires.ArbreBinaire("x" + str(h), identf)
-  res = build(h, table, root, pow(2, h))
+  global identf                           # Pour acceder a la variable globale
+  h = int(math.log(len(table), 2))        # Hauteur de l'arbre
+  root = ArbresBinaires.ArbreBinaire("x" + str(h), identf) # Creation de la racine
+  res = build(h, table, root, pow(2, h))  # Constrution de la suite de l'arbre avec build
 
   return res
-
-
 # ----------------------------------------------------------------------------------- #
+# Fonction permettant de construire recursivement l'arbre de decision associe a la table de 
+# verite 'table'
 def build(h, table, tree, pos_tab):
-  global identf
-  #pos_tab: indique les contenue de feuilles se situe à quelle position dans le tableau
-  #h:etage
-  tree.valeur = "x" + str(h)
-  if (h == 1):
+  # h: hauteur/etage
+  # table: table de verite 
+  # tree: arbre courant
+  # pos_tab: position de la feuille la plus a droite dans 'table'
+  global identf   # Pour acceder a la variable globale
+  if (h == 1):    # Si l'on est aux feuilles             
     identf += 1
     tree.enfant_gauche = ArbresBinaires.ArbreBinaire(table[int(pos_tab - 2)], identf)
     identf += 1
     tree.enfant_droit = ArbresBinaires.ArbreBinaire(table[int(pos_tab - 1)], identf)
-  else:
+  else:           # Si l'on est pas aux feuilles
     identf += 1
     tree.enfant_gauche = ArbresBinaires.ArbreBinaire("x" + str(h - 1), identf)
     build(h - 1, table, tree.enfant_gauche, pos_tab - pow(2, h - 1))
@@ -69,10 +69,12 @@ def build(h, table, tree, pos_tab):
     tree.enfant_droit = ArbresBinaires.ArbreBinaire("x" + str(h - 1), identf)
     build(h - 1, table, tree.enfant_droit, pos_tab)
   return tree
-
-
 # ----------------------------------------------------------------------------------- #
+# Fonction permettant d'ecrire un lien entre le pere et le fils s'il n'a pas deja ete ecrit dans un fichier.dot
 def dot(pere, fils, orientation, existance):
+  # pere: noeud pere dans le  lien
+  # fils: noeud fils dans le lien
+  # orientation: 1 si fils gauche et -1 si fils droit
   fichier = open("graphe.dot", 'a')
   if (orientation > 0):  # Gauche
     if ("\t" + "\"" + str(pere) + "\"" + " -> " + "\"" + str(fils) + "\"" + "[color=\"green\"];\n") not in existance:
@@ -83,35 +85,8 @@ def dot(pere, fils, orientation, existance):
       fichier.write("\t" + "\"" + str(pere) + "\"" + " -> " + "\"" + str(fils) + "\"" + "[style=\"dotted\", color=\"red\"];\n")
       existance["\t" + "\"" + str(pere) + "\"" + " -> " + "\"" + str(fils) + "\"" + "[style=\"dotted\", color=\"red\"];\n"] = "ok"
   fichier.close()
-
-
 # ----------------------------------------------------------------------------------- #
-def luka(tree, text):
-  # etageActuel = int(tree.valeur[1])
-  if (tree.enfant_gauche != None):
-    text_gauche = luka(tree.enfant_gauche, text)
-    text = str(tree.valeur) + "(" + text_gauche + ")"
-    if (tree.enfant_droit != None):
-      text_droit = luka(tree.enfant_droit, text)
-      text = text + "(" + text_droit + ")"
-      tree.valeur = text
-  else:
-    text = str(tree.valeur)
-  return text
-# ----------------------------------------------------------------------------------- #
-def luka_after(tree, text):
-  # etageActuel = int(tree.valeur[1])
-  if (tree.enfant_gauche != None):
-    text_gauche = luka_after(tree.enfant_gauche, text)
-    text = "x" + str(recup_numero_luka(tree.valeur)) + "(" + text_gauche + ")"
-    if (tree.enfant_droit != None):
-      text_droit = luka_after(tree.enfant_droit, text)
-      text = text + "(" + text_droit + ")"
-      tree.valeur = text
-  else:
-    text = str(tree.valeur)
-  return text
-# ----------------------------------------------------------------------------------- #
+# Fonction qui parcours l'arbre 'tree' et envoie a la fonction dot les liens a ecrire dans un fichier .dot
 def parcours_dot(tree, existance):
   if (tree != None):
     if (tree.enfant_gauche != None):
@@ -126,15 +101,26 @@ def parcours_dot(tree, existance):
         str(tree.enfant_droit.valeur) + "_" + str(tree.enfant_droit.id), -1,
         existance)
       parcours_dot(tree.enfant_droit, existance)
-  if (tree != None) and (tree.enfant_gauche
-                         == None) and (tree.enfant_droit
-                                       == None) and (len(existance) == 0):
+  # Cas particulier ou il n'y a qu'un seul noeud dans l'arbre
+  if (tree != None) and (tree.enfant_gauche == None) and (tree.enfant_droit == None) and (len(existance) == 0):
     fichier = open("graphe.dot", 'a')
     fichier.write(str(tree.valeur) + "\n")
     fichier.close()
-
-
 # ----------------------------------------------------------------------------------- #
+# Fonction qui a chaque noeud de l'arbre associe le mot de Lukasiewicz
+def luka(tree, text):
+  if (tree.enfant_gauche != None):
+    text_gauche = luka(tree.enfant_gauche, text)
+    text = str(tree.valeur) + "(" + text_gauche + ")"
+    if (tree.enfant_droit != None):
+      text_droit = luka(tree.enfant_droit, text)
+      text = text + "(" + text_droit + ")"
+      tree.valeur = text
+  else:
+    text = str(tree.valeur)
+  return text
+# ----------------------------------------------------------------------------------- #
+# Fonction qui compresse l'arbre en fusionnant les sous-arbres isomorphe
 def luka_compresse(tree, dict):
   global identf
   if (tree.enfant_gauche != None):
@@ -152,25 +138,10 @@ def luka_compresse(tree, dict):
       luka_compresse(tree.enfant_droit, dict)
     else:
       tree.enfant_droit = dict[tree.enfant_droit.valeur]
-
-
 # ----------------------------------------------------------------------------------- #
-def compression_bdd(tree):
-  if (tree.enfant_gauche != None):
-    if (tree.enfant_gauche.enfant_gauche !=
-        None) and (tree.enfant_gauche.enfant_droit != None):
-      if (tree.enfant_gauche.enfant_gauche.valeur ==
-          tree.enfant_gauche.enfant_droit.valeur):
-        tree.enfant_gauche = tree.enfant_gauche.enfant_gauche
-      compression_bdd(tree.enfant_gauche)
-  if (tree.enfant_droit != None):
-    if (tree.enfant_droit.enfant_gauche !=
-        None) and (tree.enfant_droit.enfant_droit != None):
-      if (tree.enfant_droit.enfant_gauche.valeur ==
-          tree.enfant_droit.enfant_droit.valeur):
-        tree.enfant_droit = tree.enfant_droit.enfant_droit
-      compression_bdd(tree.enfant_droit)
+# ---------------------------- PARTIE III ------------------------------------------- #
 # ----------------------------------------------------------------------------------- #
+# Fonction qui compresse le DAG en appliquant la Deletion Rule
 def compression_bdd2(tree):
   if (tree != None):
     if (tree.enfant_gauche != None) and (tree.enfant_droit != None):
@@ -181,6 +152,9 @@ def compression_bdd2(tree):
         compression_bdd2(tree.enfant_gauche)
         compression_bdd2(tree.enfant_droit)
 # ----------------------------------------------------------------------------------- #
+# ---------------------------- PARTIE IV -------------------------------------------- #
+# ----------------------------------------------------------------------------------- #
+# Fonction qui permet de compter le nombre de noeuds differents dans un arbre
 def parcours_nb_noeuds(tree, tab):
   if (tree == None): return 0
   else:
@@ -194,12 +168,15 @@ def parcours_nb_noeuds(tree, tab):
         res += parcours_nb_noeuds(tree.enfant_droit, tab)
     return res
 # ----------------------------------------------------------------------------------- #
-def create_coubres(nbVariables):
+# Fonction qui permet de retourner le dictionnaire contenant les noeuds et le nombre de fonctions 
+# booleenes pour toutes les combinaisons d'ROBDDs d'une variable donnee 'nbVariables'
+def create_coubres(nbVariables, affichage):
   global identf
   dicRes = {}
   valMax = 2**(2**nbVariables) 
   nbSamples = 0 # Nombre d'echantillons 
   mult = 1
+  # Samples de l'article
   if (nbVariables == 5): mult = valMax//500_003
   if (nbVariables == 6): mult = valMax//400_003
   if (nbVariables == 7): mult = valMax//486_892
@@ -207,32 +184,32 @@ def create_coubres(nbVariables):
   if (nbVariables == 9): mult = valMax//94_999
   if (nbVariables == 10): mult = valMax//17_975
 
-  # if not os.path.exists("Graphes" + str(nbVariables) + "/"):
-  #   os.mkdir("Graphes" + str(nbVariables))
+  if (affichage):
+    if not os.path.exists("Graphes" + str(nbVariables) + "/"):
+      os.mkdir("Graphes" + str(nbVariables))
+
   for i in range(valMax):
     i = i*mult
     if (i > 2**(2**nbVariables)): break
-
     nbSamples += 1 
-    # if (i > 1000000): break
-    # if(nbVariables == 5): i+=8500
-    # if (i == 500_000): break
     identf = 0
     tree = cons_arbre(table(i, int(math.log2(valMax))))
     luka(tree, "")
     luka_compresse(tree, {})
     compression_bdd2(tree)
-    # os.remove("graphe.dot")
-    # fichier = open("graphe.dot", 'a')
-    # fichier.write("digraph {\n")
-    # fichier.close()
-    # existance = {}
-    # parcours_dot(tree, existance)
-    # fichier = open("graphe.dot", 'a')
-    # fichier.write("}")
-    # fichier.close()
-    # os.system("dot -Tsvg graphe.dot -o ./Graphes" + str(nbVariables) +
-    #           "/graphe" + str(i) + ".svg")
+
+    if (affichage):
+      os.remove("graphe.dot")
+      fichier = open("graphe.dot", 'a')
+      fichier.write("digraph {\n")
+      fichier.close()
+      existance = {}
+      parcours_dot(tree, existance)
+      fichier = open("graphe.dot", 'a')
+      fichier.write("}")
+      fichier.close()
+      os.system("dot -Tpng graphe.dot -o ./Graphes" + str(nbVariables) +"/graphe" + str(i) + ".png")
+
     tab = []
     nbNoeuds = parcours_nb_noeuds(tree, tab)
     if nbNoeuds not in dicRes.keys():
@@ -242,13 +219,14 @@ def create_coubres(nbVariables):
   
   return (dicRes, nbSamples)
 # ----------------------------------------------------------------------------------- #
+# Fonction qui permet d'afficher le format des secondes en hh::mm::ss
 def temps_vers_format(tempsSec):
-    # create timedelta and convert it into string
     td_str = str(timedelta(seconds=round(tempsSec)))
 
-    # split string into individual component
     x = td_str.split(':')
     return x[0]+":"+x[1]+":"+x[2]
+# ----------------------------------------------------------------------------------- #
+# ---------------------------- PARTIE V --------------------------------------------- #
 # ----------------------------------------------------------------------------------- #
 # Fonction qui permet de recuperer e.g: '55' dans le mot de Luka: 'x55(x44(True)x33(....)) 
 def recup_numero_luka(motLuka):
@@ -262,6 +240,7 @@ def recup_numero_luka(motLuka):
   
   return int(recup)
 # ----------------------------------------------------------------------------------- #
+# Fonction qui permet de faire la fusion entre 2 ROBDD 'tree1' et 'tree2' dans 'treeRes'
 def fusion_ROBDD(tree1, tree2, treeRes):
   global identf
   # Cas basiques
@@ -273,7 +252,6 @@ def fusion_ROBDD(tree1, tree2, treeRes):
   text = ""
   valeur1 = -1
   valeur2 = -1
-  print(str(tree1.valeur)+" | "+str(tree2.valeur))
   if (str(tree1.valeur)[0] == "T"):
     valeur1 = -1  # -1 pour True
   elif (str(tree1.valeur)[0] == "F"):
@@ -346,93 +324,105 @@ def fusion_ROBDD(tree1, tree2, treeRes):
       treeRes.valeur = text
       return treeRes.valeur
 # ----------------------------------------------------------------------------------- #
+# Fonction qui permet de mettre a jour les etiquettes des ROBDDs
+def luka_after(tree, text):
+  # etageActuel = int(tree.valeur[1])
+  if (tree.enfant_gauche != None):
+    text_gauche = luka_after(tree.enfant_gauche, text)
+    text = "x" + str(recup_numero_luka(tree.valeur)) + "(" + text_gauche + ")"
+    if (tree.enfant_droit != None):
+      text_droit = luka_after(tree.enfant_droit, text)
+      text = text + "(" + text_droit + ")"
+      tree.valeur = text
+  else:
+    text = str(tree.valeur)
+  return text
 # ----------------------------------------------------------------------------------- #
-nombre = np.random.randint(0, 100)
+# ------------------------------------TESTS------------------------------------------ #
+# ----------------------------------------------------------------------------------- #
+print("===================== Partie I =====================")
+nombre = np.random.randint(0, 100) # A CHANGER POUR LES TESTS 
 print("Nombre: " + str(nombre))
-print(bin(nombre)[2:])
+print("Decomposition en binaire: "+bin(nombre))
 RES = decomposition(nombre)
-print(RES)
-print(decomposition(0))
-print(completion(RES, 8))
-print(table(nombre, 8))
-os.remove("graphe.dot")
+print("Decomposition avec la fonction: "+str(RES))
+n = 5  # A CHANGER POUR LES TESTS 
+print("Completion avec la fonction et avec n="+str(n)+": "+str(completion(RES, n)))
+print("Table de verité de "+str(nombre)+" de taille "+str(n)+": "+ str(table(nombre, n)))
+print("===================== Partie II =====================")
+# Manipulation pour l'ecriture dans un .dot
+os.remove("graphe.dot") 
 fichier = open("graphe.dot", 'a')
 fichier.write("digraph {\n")
 fichier.close()
-# tree = cons_arbre(table(38, 8))
-tree = cons_arbre(table(int('01100011', 2) ,8))
-existance = {}
-parcours_dot(tree, existance)
+nombre = 38   # A CHANGER POUR LES TESTS 
+taille = 8    # A CHANGER POUR LES TESTS 
+tree = cons_arbre(table(nombre, taille))
+# tree = cons_arbre(table(int('01100011', 2) ,8))
+# Manipulation pour l'ecriture dans un .dot
+existance = {}   # Sert pour voir si l'on a pas deja parcourut un noeud
+parcours_dot(tree, existance) 
 fichier = open("graphe.dot", 'a')
 fichier.write("}")
 fichier.close()
 os.system("dot -Tpng graphe.dot -o ./Graphes/graphe.png")
+print("Voir ./Graphes/graphe.png pour l'affichage de l'arbre de decision table("+str(nombre)+", "+str(n)+")")
 
+# Manipulation pour l'ecriture dans un .dot
 os.remove("graphe.dot")
 fichier = open("graphe.dot", 'a')
 fichier.write("digraph {\n")
 fichier.close()
-print(luka(tree, ""))
-print("_____________")
-existance = {}
+luka(tree, "")
+# Manipulation pour l'ecriture dans un .dot
+existance = {}  # Sert pour voir si l'on a pas deja parcourut un noeud
 parcours_dot(tree, existance)
 fichier = open("graphe.dot", 'a')
 fichier.write("}")
 fichier.close()
 os.system("dot -Tpng graphe.dot -o ./Graphes/graphe2.png")
+print("Voir ./Graphes/graphe2.png pour l'affichage de l'arbre de decision table("+str(nombre)+", "+str(n)+") avec les mots de Luka")
 
+# Manipulation pour l'ecriture dans un .dot
 os.remove("graphe.dot")
 fichier = open("graphe.dot", 'a')
 fichier.write("digraph {\n")
 fichier.close()
-dict = {}
-identf = 0
+dict = {}  
+identf = 0     # Pour remettre a 0 la variable globale
 luka_compresse(tree, dict)
 existance = {}
 parcours_dot(tree, existance)
+# Manipulation pour l'ecriture dans un .dot
 fichier = open("graphe.dot", 'a')
 fichier.write("}")
 fichier.close()
 os.system("dot -Tpng graphe.dot -o ./Graphes/graphe3.png")
-
+print("Voir ./Graphes/graphe3.png pour l'affichage de l'arbre de decision table("+str(nombre)+", "+str(n)+") compresse avec les mots de Luka")
+print("===================== Partie III =====================")
+# Manipulation pour l'ecriture dans un .dot
 os.remove("graphe.dot")
 fichier = open("graphe.dot", 'a')
 fichier.write("digraph {\n")
 fichier.close()
-compression_bdd(tree)
+compression_bdd2(tree)
 existance = {}
-tree2 = copy.deepcopy(tree)
 parcours_dot(tree, existance)
+# Manipulation pour l'ecriture dans un .dot
 fichier = open("graphe.dot", 'a')
 fichier.write("}")
 fichier.close()
 os.system("dot -Tpng graphe.dot -o ./Graphes/graphe4.png")
-
-os.remove("graphe.dot")
-fichier = open("graphe.dot", 'a')
-fichier.write("digraph {\n")
-fichier.close()
-compression_bdd2(tree2)
-existance = {}
-parcours_dot(tree2, existance)
-fichier = open("graphe.dot", 'a')
-fichier.write("}")
-fichier.close()
-os.system("dot -Tpng graphe.dot -o ./Graphes/graphe5.png")
-
-
+print("Voir ./Graphes/graphe4.png pour l'affichage de l'arbre de decision table("+str(nombre)+", "+str(n)+") transforme en ROBDD")
+print("===================== Partie IV =====================")
 tableau = [['No. Variables(n)', 'No. Samples', 'No. Unique Sizes', 'Compute Time hh::mm::ss', 'Seconds per ROBDD']]
-nombreVariables = 1
-for i in range (1, nombreVariables):
+nombreVariables = 5   # A CHANGER POUR LES TESTS 
+for i in range (1, nombreVariables):  # de 1 a nombreVariables-1 ATTENTION
   t0 = time.time()
-  dictRes, nbSamples = create_coubres(i)
+  dictRes, nbSamples = create_coubres(i, False)  # A CHANGER PAR True SI ON SOUHAITE AFFICHER TOUS LES GRPAHES (ATTENTION LONG POUR nombreVariables GRAND)
   t1 = time.time() - t0
-  # fichier = open("data.txt", 'a')
-  # fichier.write(str(i)+"\t\t\t"+str(t1)+"\n")
-  # fichier.close()
   tableau.insert(i, [str(i), str(nbSamples), len(dictRes), temps_vers_format(t1), str(t1/nbSamples)])
-  print("\n"+str(i)+" variables: ")
-  print(dictRes)
+  print("Nombre variables "+str(i)+": "+str(dictRes))
   listeDict = dictRes.items()
   listeDict = sorted(listeDict)
   x, y = zip(*listeDict)
@@ -444,7 +434,7 @@ for i in range (1, nombreVariables):
   if not os.path.exists("Figures"):
     os.mkdir("Figures")
   plt.savefig("Figures/ROBDD_node_count_for_"+str(i)+"_variable.png")
-  plt.show()
+  # plt.show()  # Decommenter si on veut l'afficher avec le terminal
   
 os.remove("data.txt")
 fichier = open("data.txt", 'a')
@@ -452,98 +442,68 @@ fichier.write(tabulate(tableau, headers='firstrow', tablefmt='fancy_grid'))
 fichier.close()
 
 print(tabulate(tableau, headers='firstrow', tablefmt='fancy_grid'))
-print("----------------------------------")
-# valMax = 2**(2**10) 
-# tree = cons_arbre(table((2**100)+1, int(math.log2(valMax))))
-# luka(tree, "")
-# luka_compresse(tree, {})
-# compression_bdd2(tree)
-# # os.remove("graphe.dot")
-# # fichier = open("graphe.dot", 'a')
-# # fichier.write("graph {\n")
-# # fichier.close()
-# # existance = {}
-# # parcours_dot(tree, existance)
-# # fichier = open("graphe.dot", 'a')
-# # fichier.write("}")
-# # fichier.close()
-# # os.system("dot -Tsvg graphe.dot -o ./Test.svg")
-# tab = []
-# dicRes = {}
-# nbNoeuds = parcours_nb_noeuds(tree, tab)
-# if nbNoeuds not in dicRes.keys():
-#   dicRes[nbNoeuds] = 1
-# else:
-#   dicRes[nbNoeuds] += 1
-# print(dicRes)
+print("Voir ./Figures/ pour les courbes traces pour les variables allant de 1 a "+str(nombreVariables))
+print("===================== Partie V =====================")
+identf = 0
+tree1 = cons_arbre(table(int('0111', 2), 4))    # TABLE A CHANGER POUR D'AUTRES TESTS
+luka(tree1, "")
+luka_compresse(tree1, {})
+compression_bdd2(tree1)
+luka_after(tree1, "")
+# Manipulation pour l'ecriture dans un .dot
+os.remove("graphe.dot")
+fichier = open("graphe.dot", 'a')
+fichier.write("digraph {\n")
+fichier.close()
+existance = {}
+parcours_dot(tree1, existance)
+fichier = open("graphe.dot", 'a')
+fichier.write("}")
+fichier.close()
+os.system("dot -Tpng graphe.dot -o ./Graphes/ROBDD_a_fusionner_1.png")
 
-# identf = 0
-# tree1 = cons_arbre(table(int('0111', 2), 4))
-# luka(tree1, "")
-# luka_compresse(tree1, {})
-# compression_bdd2(tree1)
-# luka_after(tree1, "")
-# os.remove("graphe.dot")
-# fichier = open("graphe.dot", 'a')
-# fichier.write("digraph {\n")
-# fichier.close()
-# existance = {}
-# parcours_dot(tree1, existance)
-# fichier = open("graphe.dot", 'a')
-# fichier.write("}")
-# fichier.close()
-# os.system("dot -Tpng graphe.dot -o ./Fusion1.png")
+identf = 0
+tree2 = cons_arbre(table(int('1000', 2), 4))  # TABLE A CHANGER POUR D'AUTRES TESTS
+luka(tree2, "")
+luka_compresse(tree2, {})
+compression_bdd2(tree2)
+luka_after(tree2, "")
+# Manipulation pour l'ecriture dans un .dot
+os.remove("graphe.dot")
+fichier = open("graphe.dot", 'a')
+fichier.write("digraph {\n")
+fichier.close()
+existance = {}
+parcours_dot(tree2, existance)
+fichier = open("graphe.dot", 'a')
+fichier.write("}")
+fichier.close()
+os.system("dot -Tpng graphe.dot -o ./Graphes/ROBDD_a_fusionner_2.png")
 
-# identf = 0
-# tree2 = cons_arbre(table(int('1000', 2), 4))
-# luka(tree2, "")
-# luka_compresse(tree2, {})
-# compression_bdd2(tree2)
-# luka_after(tree2, "")
-# os.remove("graphe.dot")
-# fichier = open("graphe.dot", 'a')
-# fichier.write("digraph {\n")
-# fichier.close()
-# existance = {}
-# parcours_dot(tree2, existance)
-# fichier = open("graphe.dot", 'a')
-# fichier.write("}")
-# fichier.close()
-# os.system("dot -Tpng graphe.dot -o ./Fusion2.png")
-
-# identf = 0
-# tree3 = ArbresBinaires.ArbreBinaire("", 0)
-# fusion_ROBDD(tree1, tree2, tree3)
-# luka_compresse(tree3, {})
-# compression_bdd2(tree3)
-# os.remove("graphe.dot")
-# fichier = open("graphe.dot", 'a')
-# fichier.write("digraph {\n")
-# fichier.close()
-# existance = {}
-# parcours_dot(tree3, existance)
-# fichier = open("graphe.dot", 'a')
-# fichier.write("}")
-# fichier.close()
-# os.system("dot -Tpng graphe.dot -o ./FustionTotale.png")
-
-print("----------------------------------")
-nbVar = 3
+identf = 0
+tree3 = ArbresBinaires.ArbreBinaire("", 0)
+fusion_ROBDD(tree1, tree2, tree3)
+luka_compresse(tree3, {})
+compression_bdd2(tree3)
+# Manipulation pour l'ecriture dans un .dot
+os.remove("graphe.dot")
+fichier = open("graphe.dot", 'a')
+fichier.write("digraph {\n")
+fichier.close()
+existance = {}
+parcours_dot(tree3, existance)
+fichier = open("graphe.dot", 'a')
+fichier.write("}")
+fichier.close()
+os.system("dot -Tpng graphe.dot -o ./Graphes/ROBDD_fusionne.png")
+print("Voir les deux ROBDD a fusionner dans ./Graphes/ROBDD_a_fusionner_1.png et ./Graphes/ROBDD_a_fusionner_2.png\net l'ROBDD fusionne dans ./Graphes/ROBDD_fusionne.png")
+print("===================== Autres tests =====================")
+nbVar = 10            # A CHANGER POUR D'AUTRES TESTS
+nbTable = (2**100)+1  # A CHANGER POUR D'AUTRES TESTS
 valMax = 2**(2**nbVar) 
-tree = cons_arbre(table(5, int(math.log2(valMax))))
+tree = cons_arbre(table(nbTable, int(math.log2(valMax))))
 luka(tree, "")
 luka_compresse(tree, {})
-compression_bdd2(tree)
-# os.remove("graphe.dot")
-# fichier = open("graphe.dot", 'a')
-# fichier.write("graph {\n")
-# fichier.close()
-# existance = {}
-# parcours_dot(tree, existance)
-# fichier = open("graphe.dot", 'a')
-# fichier.write("}")
-# fichier.close()
-# os.system("dot -Tsvg graphe.dot -o ./Test.svg")
 tab = []
 dicRes = {}
 nbNoeuds = parcours_nb_noeuds(tree, tab)
@@ -551,4 +511,15 @@ if nbNoeuds not in dicRes.keys():
   dicRes[nbNoeuds] = 1
 else:
   dicRes[nbNoeuds] += 1
-print(dicRes)
+print("Compression => Table de verite nb: "+str(nbTable)+" | "+str(nbVar)+" variables: "+str(dicRes))
+compression_bdd2(tree)
+tab = []
+dicRes = {}
+nbNoeuds = parcours_nb_noeuds(tree, tab)
+if nbNoeuds not in dicRes.keys():
+  dicRes[nbNoeuds] = 1
+else:
+  dicRes[nbNoeuds] += 1
+print("Compression_bdd => Table de verite nb: "+str(nbTable)+" | "+str(nbVar)+" variables: "+str(dicRes))
+
+

@@ -1,12 +1,4 @@
 digraph {
-	"x3(x2(x1(True)(True))(x1(False)(False)))(x2(x1(False)(True))(x1(True)(False)))_0" -> "x2(x1(True)(True))(x1(False)(False))_1"[color="green"];
-	"x2(x1(True)(True))(x1(False)(False))_1" -> "True_3"[color="green"];
-	"x2(x1(True)(True))(x1(False)(False))_1" -> "False_6"[style="dotted", color="red"];
-	"x3(x2(x1(True)(True))(x1(False)(False)))(x2(x1(False)(True))(x1(True)(False)))_0" -> "x2(x1(False)(True))(x1(True)(False))_8"[style="dotted", color="red"];
-	"x2(x1(False)(True))(x1(True)(False))_8" -> "x1(False)(True)_9"[color="green"];
-	"x1(False)(True)_9" -> "False_6"[color="green"];
-	"x1(False)(True)_9" -> "True_3"[style="dotted", color="red"];
-	"x2(x1(False)(True))(x1(True)(False))_8" -> "x1(True)(False)_12"[style="dotted", color="red"];
-	"x1(True)(False)_12" -> "True_3"[color="green"];
-	"x1(True)(False)_12" -> "False_6"[style="dotted", color="red"];
+	"x2(True)(x1(True)(True))_0" -> "True_2"[color="green"];
+	"x2(True)(x1(True)(True))_0" -> "x1(True)(True)_7"[style="dotted", color="red"];
 }
